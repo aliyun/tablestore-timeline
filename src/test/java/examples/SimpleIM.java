@@ -6,12 +6,12 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-public class BaseIM {
+public class SimpleIM {
     private DistributeTimelineStore store = null;
     private DistributeTimelineStore sync = null;
 
     public static void main(String[] args) {
-        BaseIM im = new BaseIM();
+        SimpleIM im = new SimpleIM();
         im.push();
 
         im.getHistoryMessage();
@@ -19,7 +19,7 @@ public class BaseIM {
         im.close();
     }
 
-    BaseIM() {
+    SimpleIM() {
         System.out.println("Start create IM");
         DistributeTimelineConfig storeConfig = new DistributeTimelineConfig(
                 "<Your instance endpoint>",
