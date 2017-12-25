@@ -82,7 +82,7 @@ public class ScanParameterBuilder {
     /**
      * 生成ScanParameter对象，需要调用完from，to和maxCount后再调用build接口。
      * @return      ScanParameter对象。
-     * @throws      IllegalArgumentException
+     * @throws      TimelineException 异常
      */
     public ScanParameter build() {
         if (parameter.getFrom() == null) {

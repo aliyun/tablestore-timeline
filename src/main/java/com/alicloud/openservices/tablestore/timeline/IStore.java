@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.concurrent.Future;
 
 /**
- * 定义存储层的接口
+ * 存储层接口的定义。
  */
 public interface IStore extends Closeable {
 
@@ -73,7 +73,7 @@ public interface IStore extends Closeable {
 
     /**
      * 判断store涉及到的资源是否已经被成功创建。
-     * @return
+     * @return  True/False 是否存在
      */
     boolean exist();
 

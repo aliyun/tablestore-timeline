@@ -6,6 +6,9 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * 基于Timeline的简单IM实现。
+ */
 public class SimpleIM {
     private DistributeTimelineStore store = null;
     private DistributeTimelineStore sync = null;
