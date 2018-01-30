@@ -1,4 +1,4 @@
-package com.alicloud.openservices.tablestore.timeline;
+package com.alicloud.openservices.tablestore.timeline.common;
 
 /**
  * Timeline异常。
@@ -31,7 +31,7 @@ public class TimelineException extends RuntimeException {
      * 获取异常类型。
      * @return  异常类型，
      */
-    TimelineExceptionType getType() {
+    public TimelineExceptionType getType() {
         return this.type;
     }
 }

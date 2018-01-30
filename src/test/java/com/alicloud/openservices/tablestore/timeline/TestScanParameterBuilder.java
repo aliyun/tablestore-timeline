@@ -1,10 +1,10 @@
 package com.alicloud.openservices.tablestore.timeline;
 
+import com.alicloud.openservices.tablestore.timeline.common.TimelineException;
+import com.alicloud.openservices.tablestore.timeline.common.TimelineExceptionType;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class TestScanParameterBuilder {
     @Test
@@ -14,7 +14,7 @@ public class TestScanParameterBuilder {
             builder.build();
             fail();
         } catch (TimelineException e) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, e.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, e.getType());
         }
 
         try {
@@ -23,7 +23,7 @@ public class TestScanParameterBuilder {
             builder.build();
             fail();
         } catch (TimelineException e) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, e.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, e.getType());
         }
 
         try {
@@ -32,7 +32,7 @@ public class TestScanParameterBuilder {
             builder.build();
             fail();
         } catch (TimelineException e) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, e.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, e.getType());
         }
 
         try {
@@ -41,7 +41,7 @@ public class TestScanParameterBuilder {
             builder.build();
             fail();
         } catch (TimelineException e) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, e.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, e.getType());
         }
     }
 
@@ -54,7 +54,7 @@ public class TestScanParameterBuilder {
             builder.build();
             fail();
         } catch (TimelineException e) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, e.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, e.getType());
         }
 
         try {
@@ -64,7 +64,7 @@ public class TestScanParameterBuilder {
             builder.build();
             fail();
         } catch (TimelineException e) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, e.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, e.getType());
         }
 
         try {
@@ -74,7 +74,7 @@ public class TestScanParameterBuilder {
             builder.build();
             fail();
         } catch (TimelineException e) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, e.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, e.getType());
         }
     }
 
@@ -88,7 +88,7 @@ public class TestScanParameterBuilder {
             builder.build();
             fail();
         } catch (TimelineException e) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, e.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, e.getType());
         }
 
 
@@ -100,7 +100,7 @@ public class TestScanParameterBuilder {
             builder.build();
             fail();
         } catch (TimelineException e) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, e.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, e.getType());
         }
     }
 
@@ -114,7 +114,7 @@ public class TestScanParameterBuilder {
             builder.build();
             fail();
         } catch (TimelineException e) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, e.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, e.getType());
         }
 
         try {
@@ -125,7 +125,7 @@ public class TestScanParameterBuilder {
             builder.build();
             fail();
         } catch (TimelineException e) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, e.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, e.getType());
         }
 
 
@@ -137,7 +137,7 @@ public class TestScanParameterBuilder {
             builder.build();
             fail();
         } catch (TimelineException e) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, e.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, e.getType());
         }
 
 
@@ -149,7 +149,7 @@ public class TestScanParameterBuilder {
             builder.build();
             fail();
         } catch (TimelineException e) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, e.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, e.getType());
         }
 
         try {
@@ -160,7 +160,7 @@ public class TestScanParameterBuilder {
             builder.build();
             fail();
         } catch (TimelineException e) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, e.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, e.getType());
         }
     }
 

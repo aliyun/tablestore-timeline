@@ -1,15 +1,17 @@
-package com.alicloud.openservices.tablestore.timeline;
+package com.alicloud.openservices.tablestore.timeline.store;
 
 import com.alicloud.openservices.tablestore.AsyncClient;
 import com.alicloud.openservices.tablestore.model.RangeIteratorParameter;
 import com.alicloud.openservices.tablestore.model.RowIterator;
+import com.alicloud.openservices.tablestore.timeline.TimelineEntry;
+import com.alicloud.openservices.tablestore.timeline.utils.Utils;
 
 import java.util.Iterator;
 
 /**
  * DistributeTimeline的迭代器，用于逐个遍历读取消息。
  */
-class DistributeTimelineIterator implements Iterator<TimelineEntry>{
+public class DistributeTimelineIterator implements Iterator<TimelineEntry>{
     private RowIterator rowIterator = null;
     private DistributeTimelineConfig config = null;
 

@@ -1,4 +1,8 @@
-package com.alicloud.openservices.tablestore.timeline;
+package com.alicloud.openservices.tablestore.timeline.message;
+
+import com.alicloud.openservices.tablestore.timeline.common.TimelineException;
+import com.alicloud.openservices.tablestore.timeline.common.TimelineExceptionType;
+import com.alicloud.openservices.tablestore.timeline.utils.Utils;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,6 +34,9 @@ public abstract class DistinctMessage implements IMessage {
 
     @Override
     public void setMessageID(String messageID) {
+        if (messageID == null || messageID.isEmpty()) {
+            throw new TimelineException(TimelineExceptionType.INVALID_USE, "message id is null or empty.");
+        }
         this.messageID = messageID;
     }
 }

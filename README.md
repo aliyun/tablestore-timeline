@@ -11,7 +11,7 @@ The recommended way to use the TableStore Timeline Lib in your project is to con
 <dependency>
     <groupId>com.aliyun.openservices.tablestore</groupId>
     <artifactId>Timeline</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 

@@ -1,12 +1,20 @@
-package com.alicloud.openservices.tablestore.timeline;
+package com.alicloud.openservices.tablestore.timeline.store;
 
 import com.alicloud.openservices.tablestore.*;
 import com.alicloud.openservices.tablestore.model.*;
+import com.alicloud.openservices.tablestore.timeline.ScanParameter;
+import com.alicloud.openservices.tablestore.timeline.TimelineEntry;
+import com.alicloud.openservices.tablestore.timeline.common.TimelineCallback;
+import com.alicloud.openservices.tablestore.timeline.common.TimelineException;
+import com.alicloud.openservices.tablestore.timeline.common.TimelineExceptionType;
+import com.alicloud.openservices.tablestore.timeline.message.IMessage;
+import com.alicloud.openservices.tablestore.timeline.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.*;
 
 /**
@@ -39,7 +47,7 @@ public class DistributeTimelineStore implements IStore {
         } catch (TableStoreException ex) {
             throw handleTableStoreException(ex, timelineID, "write");
         } catch (ClientException ex) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "Parameter is invalid, reason:" + ex.getMessage(), ex);
         }
     }
@@ -65,7 +73,7 @@ public class DistributeTimelineStore implements IStore {
         } catch (TableStoreException ex) {
             throw handleTableStoreException(ex, timelineID, "write");
         } catch (ClientException ex) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "Parameter is invalid, reason:" + ex.getMessage(), ex);
         }
     }
@@ -78,7 +86,7 @@ public class DistributeTimelineStore implements IStore {
         } catch (TableStoreException ex) {
             throw handleTableStoreException(ex, timelineID, "read");
         } catch (ClientException ex) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "Parameter is invalid, reason:" + ex.getMessage(), ex);
         }
     }
@@ -93,7 +101,7 @@ public class DistributeTimelineStore implements IStore {
         } catch (TableStoreException ex) {
             throw handleTableStoreException(ex, timelineID, "read");
         } catch (ClientException ex) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "Parameter is invalid, reason:" + ex.getMessage(), ex);
         }
     }
@@ -106,7 +114,7 @@ public class DistributeTimelineStore implements IStore {
         } catch (TableStoreException ex) {
             throw handleTableStoreException(ex, timelineID, "scan");
         } catch (ClientException ex) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "Parameter is invalid, reason:" + ex.getMessage(), ex);
         }
     }
@@ -129,17 +137,17 @@ public class DistributeTimelineStore implements IStore {
             if (ex.getErrorCode().equals("OTSObjectAlreadyExist")) {
                 logger.warn("Store has be created.");
             } else if (ex.getHttpStatus() >= 400 && ex.getHttpStatus() < 500) {
-                throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+                throw new TimelineException(TimelineExceptionType.INVALID_USE,
                         "Parameter is invalid, reason:" + ex.getMessage(), ex);
             } else if (ex.getHttpStatus() >= 500 && ex.getHttpStatus() < 600) {
-                throw new TimelineException(TimelineExceptionType.TET_RETRY,
+                throw new TimelineException(TimelineExceptionType.RETRY,
                         String.format("Create store failed, reason:%s.", ex.toString()), ex);
             } else {
-                throw new TimelineException(TimelineExceptionType.TET_UNKNOWN,
+                throw new TimelineException(TimelineExceptionType.UNKNOWN,
                         String.format("Create store failed, reason:%s.", ex.toString()), ex);
             }
         } catch (ClientException ex) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "Create store failed, reason:" + ex.getMessage(), ex);
         }
     }
@@ -155,17 +163,17 @@ public class DistributeTimelineStore implements IStore {
             if (ex.getErrorCode().equals("OTSObjectNotExist")) {
                 logger.warn("Store has be drop.");
             } else if (ex.getHttpStatus() >= 400 && ex.getHttpStatus() < 500) {
-                throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+                throw new TimelineException(TimelineExceptionType.INVALID_USE,
                         "Parameter is invalid, reason:" + ex.getMessage(), ex);
             } else if (ex.getHttpStatus() >= 500 && ex.getHttpStatus() < 600) {
-                throw new TimelineException(TimelineExceptionType.TET_RETRY,
+                throw new TimelineException(TimelineExceptionType.RETRY,
                         String.format("Drop store failed, reason:%s.", ex.toString()), ex);
             } else {
-                throw new TimelineException(TimelineExceptionType.TET_UNKNOWN,
+                throw new TimelineException(TimelineExceptionType.UNKNOWN,
                         String.format("Drop store failed, reason:%s.", ex.toString()), ex);
             }
         } catch (ClientException ex) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "Drop store failed, reason:" + ex.getMessage(), ex);
         }
     }
@@ -181,17 +189,17 @@ public class DistributeTimelineStore implements IStore {
             if (ex.getErrorCode().equals("OTSObjectNotExist")) {
                 return false;
             } else if (ex.getHttpStatus() >= 400 && ex.getHttpStatus() < 500) {
-                throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+                throw new TimelineException(TimelineExceptionType.INVALID_USE,
                         "Parameter is invalid, reason:" + ex.getMessage(), ex);
             } else if (ex.getHttpStatus() >= 500 && ex.getHttpStatus() < 600) {
-                throw new TimelineException(TimelineExceptionType.TET_RETRY,
+                throw new TimelineException(TimelineExceptionType.RETRY,
                         String.format("Exist store failed, reason:%s.", ex.toString()), ex);
             } else {
-                throw new TimelineException(TimelineExceptionType.TET_UNKNOWN,
+                throw new TimelineException(TimelineExceptionType.UNKNOWN,
                         String.format("Exist store failed, reason:%s.", ex.toString()), ex);
             }
         } catch (ClientException ex) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "Exist store failed, reason:" + ex.getMessage(), ex);
         }
     }
@@ -222,6 +230,11 @@ public class DistributeTimelineStore implements IStore {
         iteratorParameter.setMaxCount(parameter.getMaxCount());
         iteratorParameter.setMaxVersions(1);
         iteratorParameter.setBufferSize(parameter.getMaxCount());
+
+        if (parameter.getFilter() != null) {
+            iteratorParameter.setFilter(parameter.getFilter());
+        }
+
         return iteratorParameter;
     }
 
@@ -237,10 +250,13 @@ public class DistributeTimelineStore implements IStore {
 
         byte[] content = message.serialize();
         if (content.length > 1000 * 1024 * 1024) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     String.format("Message Content must less than 1GB, current:%s", String.valueOf(content.length)));
         }
 
+        /**
+         * Write message content.
+         */
         int pos = 0;
         int index = Utils.CONTENT_COLUMN_START_ID;
         while (pos < content.length) {
@@ -250,17 +266,37 @@ public class DistributeTimelineStore implements IStore {
             } else {
                 columnValue = Arrays.copyOfRange(content, pos, content.length);
             }
-            putChange.addColumn(String.valueOf(config.getMessageContentPrefix() + String.valueOf(index++)),
-                    ColumnValue.fromBinary(columnValue));
+            String columnName = Utils.SYSTEM_COLUMN_NAME_PREFIX + config.getMessageContentSuffix() + String.valueOf(index++);
+            putChange.addColumn(String.valueOf(columnName), ColumnValue.fromBinary(columnValue));
             pos += columnValue.length;
         }
 
-        if (config.getColumnNameOfMessageCrc32() != null && !config.getColumnNameOfMessageCrc32().isEmpty()) {
+        /**
+         * Write CRC32.
+         */
+        if (config.getColumnNameOfMessageCrc32Suffix() != null && !config.getColumnNameOfMessageCrc32Suffix().isEmpty()) {
             long crc32 = Utils.crc32(content);
-            putChange.addColumn(config.getColumnNameOfMessageCrc32(), ColumnValue.fromLong(crc32));
+            String columnName = Utils.SYSTEM_COLUMN_NAME_PREFIX + config.getColumnNameOfMessageCrc32Suffix();
+            putChange.addColumn(columnName, ColumnValue.fromLong(crc32));
         }
 
-        putChange.addColumn(config.getMessageIDColumnName(), ColumnValue.fromString(message.getMessageID()));
+        /**
+         * Write message ID.
+         */
+        putChange.addColumn(Utils.SYSTEM_COLUMN_NAME_PREFIX + config.getMessageIDColumnNameSuffix(), ColumnValue.fromString(message.getMessageID()));
+
+        /**
+         * Write message attributes.
+         */
+        Map<String, String> attributes = message.getAttributes();
+        for (String key : attributes.keySet()) {
+            if (key.startsWith(Utils.SYSTEM_COLUMN_NAME_PREFIX))
+            {
+                throw new TimelineException(TimelineExceptionType.INVALID_USE,
+                        String.format("Attribute name:%s can not start with %s", key, Utils.SYSTEM_COLUMN_NAME_PREFIX));
+            }
+            putChange.addColumn(key, ColumnValue.fromString(attributes.get(key)));
+        }
 
         request.setRowChange(putChange);
         return request;
@@ -323,8 +359,8 @@ public class DistributeTimelineStore implements IStore {
                 } catch (TableStoreException ex) {
                     throw handleTableStoreException(ex, timelineID, "read");
                 } catch (ClientException ex) {
-                    throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
-                            "Drop store failed, reason:" + ex.getMessage(), ex);
+                    throw new TimelineException(TimelineExceptionType.INVALID_USE,
+                            "Get timeline entry failed, reason:" + ex.getMessage(), ex);
                 }
             }
 
@@ -336,14 +372,18 @@ public class DistributeTimelineStore implements IStore {
                 } catch (TableStoreException ex) {
                     throw handleTableStoreException(ex, timelineID, "read");
                 } catch (ClientException ex) {
-                    throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
-                            "Drop store failed, reason:" + ex.getMessage(), ex);
+                    throw new TimelineException(TimelineExceptionType.INVALID_USE,
+                            "Get timeline entry failed, reason:" + ex.getMessage(), ex);
                 }
             }
         };
     }
 
-    private Future<TimelineEntry> doWriteAsync(final String timelineID, final IMessage message, final TimelineCallback<IMessage> callback, PutRowRequest request) {
+    private Future<TimelineEntry> doWriteAsync(final String timelineID,
+                                               final IMessage message,
+                                               final TimelineCallback<IMessage> callback,
+                                               PutRowRequest request)
+    {
         final TableStoreCallback<PutRowRequest, PutRowResponse> tablestoreCallback = new TableStoreCallback<PutRowRequest, PutRowResponse>() {
             @Override
             public void onCompleted(PutRowRequest request, PutRowResponse response) {
@@ -385,7 +425,7 @@ public class DistributeTimelineStore implements IStore {
                 } catch (TableStoreException ex) {
                     throw handleTableStoreException(ex, timelineID, "write");
                 } catch (ClientException ex) {
-                    throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+                    throw new TimelineException(TimelineExceptionType.INVALID_USE,
                             "Drop store failed, reason:" + ex.getMessage(), ex);
                 }
             }
@@ -398,7 +438,7 @@ public class DistributeTimelineStore implements IStore {
                 } catch (TableStoreException ex) {
                     throw handleTableStoreException(ex, timelineID, "write");
                 } catch (ClientException ex) {
-                    throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+                    throw new TimelineException(TimelineExceptionType.INVALID_USE,
                             "Drop store failed, reason:" + ex.getMessage(), ex);
                 }
             }
@@ -407,16 +447,16 @@ public class DistributeTimelineStore implements IStore {
 
     private TimelineException handleTableStoreException(TableStoreException ex, String timelineID, String type) {
         if (ex.getErrorCode().equals("OTSObjectNotExist")) {
-            return new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            return new TimelineException(TimelineExceptionType.INVALID_USE,
                     "Store is not create, please create before " + type, ex);
         } else if (ex.getHttpStatus() >= 400 && ex.getHttpStatus() < 500) {
-            return new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            return new TimelineException(TimelineExceptionType.INVALID_USE,
                     "Parameter is invalid, reason:" + ex.getMessage(), ex);
         } else if (ex.getHttpStatus() >= 500 && ex.getHttpStatus() < 600) {
-            return new TimelineException(TimelineExceptionType.TET_RETRY,
+            return new TimelineException(TimelineExceptionType.RETRY,
                     String.format("%s timeline %s failed, reason:%s.", type, timelineID, ex.toString()), ex);
         } else {
-            return new TimelineException(TimelineExceptionType.TET_UNKNOWN,
+            return new TimelineException(TimelineExceptionType.UNKNOWN,
                     String.format("%s timeline %s failed, reason:%s.", type, timelineID, ex.toString()), ex);
         }
     }
@@ -425,20 +465,20 @@ public class DistributeTimelineStore implements IStore {
         if (e instanceof TableStoreException) {
             TableStoreException ex = (TableStoreException)e;
             if (ex.getErrorCode().equals("OTSObjectNotExist")) {
-                e = new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+                e = new TimelineException(TimelineExceptionType.INVALID_USE,
                         "Store is not create, please create before " + type);
             } else if (ex.getHttpStatus() >= 400 && ex.getHttpStatus() < 500) {
-                e = new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+                e = new TimelineException(TimelineExceptionType.INVALID_USE,
                         "Parameter is invalid, reason:" + ex.getMessage(), ex);
             } else if (ex.getHttpStatus() >= 500 && ex.getHttpStatus() < 600) {
-                e = new TimelineException(TimelineExceptionType.TET_RETRY,
+                e = new TimelineException(TimelineExceptionType.RETRY,
                         "Store occur some error,can retry, reason:" + ex.getMessage(), ex);
             } else {
-                e = new TimelineException(TimelineExceptionType.TET_UNKNOWN,
+                e = new TimelineException(TimelineExceptionType.UNKNOWN,
                         String.format("%s timeline %s failed, reason:%s.",type, timelineID, ex.toString()), ex);
             }
         } else if (e instanceof ClientException) {
-            e = new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            e = new TimelineException(TimelineExceptionType.INVALID_USE,
                     "Parameter is invalid, reason:" + e.getMessage(), e);
         }
         return e;

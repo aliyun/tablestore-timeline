@@ -1,5 +1,11 @@
 package com.alicloud.openservices.tablestore.timeline;
 
+import com.alicloud.openservices.tablestore.timeline.common.TimelineCallback;
+import com.alicloud.openservices.tablestore.timeline.common.TimelineException;
+import com.alicloud.openservices.tablestore.timeline.common.TimelineExceptionType;
+import com.alicloud.openservices.tablestore.timeline.message.IMessage;
+import com.alicloud.openservices.tablestore.timeline.store.IStore;
+
 import java.util.Iterator;
 import java.util.concurrent.Future;
 
@@ -29,12 +35,12 @@ public class Timeline {
      */
     public Timeline(String timelineID, IStore store) {
         if (timelineID == null || timelineID.isEmpty()) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "Timeline parameter timelineID is null or empty");
         }
 
         if (store == null) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "Timeline parameter store is null");
         }
 
@@ -49,7 +55,7 @@ public class Timeline {
      */
     public TimelineEntry store(IMessage message) {
         if (message == null) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "store parameter message is null");
         }
 
@@ -64,7 +70,7 @@ public class Timeline {
      */
     public Future<TimelineEntry> storeAsync(IMessage message, TimelineCallback<IMessage> callback) {
         if (message == null) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "storeAsync parameter message is null");
         }
 
@@ -79,7 +85,7 @@ public class Timeline {
      */
     public void batch(IMessage message) {
         if (message == null) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "store parameter message is null");
         }
 
@@ -93,7 +99,7 @@ public class Timeline {
      */
     public TimelineEntry get(Long sequenceID) {
         if (sequenceID == null) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "get parameter sequenceID is null");
         }
 
@@ -108,7 +114,7 @@ public class Timeline {
      */
     public Future<TimelineEntry> getAsync(Long sequenceID, TimelineCallback<Long> callback) {
         if (sequenceID == null) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "getAsync parameter sequenceID is null");
         }
 
@@ -122,7 +128,7 @@ public class Timeline {
      */
     public Iterator<TimelineEntry> scan(ScanParameter parameter) {
         if (parameter == null) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "scan parameter is null");
         }
 
