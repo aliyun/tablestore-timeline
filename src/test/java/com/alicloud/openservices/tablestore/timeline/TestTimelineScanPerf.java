@@ -2,6 +2,9 @@ package com.alicloud.openservices.tablestore.timeline;
 
 import com.alicloud.openservices.tablestore.SyncClient;
 import com.alicloud.openservices.tablestore.model.DeleteTableRequest;
+import com.alicloud.openservices.tablestore.timeline.store.DistributeTimelineConfig;
+import com.alicloud.openservices.tablestore.timeline.store.DistributeTimelineStore;
+import com.alicloud.openservices.tablestore.timeline.store.IStore;
 import org.apache.commons.codec.binary.Base64;
 import org.junit.After;
 import org.junit.Before;

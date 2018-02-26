@@ -1,5 +1,11 @@
 package com.alicloud.openservices.tablestore.timeline;
 
+import com.alicloud.openservices.tablestore.timeline.common.TimelineCallback;
+import com.alicloud.openservices.tablestore.timeline.common.TimelineException;
+import com.alicloud.openservices.tablestore.timeline.common.TimelineExceptionType;
+import com.alicloud.openservices.tablestore.timeline.message.IMessage;
+import com.alicloud.openservices.tablestore.timeline.message.StringMessage;
+import com.alicloud.openservices.tablestore.timeline.store.IStore;
 import org.junit.Test;
 
 import java.util.Iterator;
@@ -87,21 +93,21 @@ public class TestTimeline {
             new Timeline(null, store);
             fail();
         } catch (TimelineException ex) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, ex.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, ex.getType());
         }
 
         try {
             new Timeline("", store);
             fail();
         } catch (TimelineException ex) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, ex.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, ex.getType());
         }
 
         try {
             new Timeline("1", null);
             fail();
         } catch (TimelineException ex) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, ex.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, ex.getType());
         }
     }
 
@@ -114,7 +120,7 @@ public class TestTimeline {
             timeline.store(null);
             fail();
         } catch (TimelineException ex) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, ex.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, ex.getType());
         }
     }
 
@@ -127,7 +133,7 @@ public class TestTimeline {
             timeline.storeAsync(null, null);
             fail();
         } catch (TimelineException ex) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, ex.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, ex.getType());
         }
     }
 
@@ -140,7 +146,7 @@ public class TestTimeline {
             timeline.get(null);
             fail();
         } catch (TimelineException ex) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, ex.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, ex.getType());
         }
     }
 
@@ -153,7 +159,7 @@ public class TestTimeline {
             timeline.getAsync(null, null);
             fail();
         } catch (TimelineException ex) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, ex.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, ex.getType());
         }
     }
 
@@ -166,7 +172,7 @@ public class TestTimeline {
             timeline.scan(null);
             fail();
         } catch (TimelineException ex) {
-            assertEquals(TimelineExceptionType.TET_INVALID_USE, ex.getType());
+            assertEquals(TimelineExceptionType.INVALID_USE, ex.getType());
         }
     }
 

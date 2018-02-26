@@ -1,5 +1,7 @@
 package com.alicloud.openservices.tablestore.timeline;
 
+import com.alicloud.openservices.tablestore.timeline.message.IMessage;
+
 /**
  * Timeline实体类，包括顺序ID和消息体。
  */
@@ -15,11 +17,11 @@ public class TimelineEntry {
     private IMessage message = null;
 
     /**
-     * 构造函数。仅package内可见，LIB使用者无需构造TimelineEntry。
+     * 构造函数。
      * @param sequenceID    顺序ID，由LIB或存储系统生成。
      * @param message       消息实体。
      */
-    TimelineEntry(Long sequenceID, IMessage message) {
+    public TimelineEntry(Long sequenceID, IMessage message) {
         this.sequenceID = sequenceID;
         this.message = message;
     }

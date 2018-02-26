@@ -1,5 +1,9 @@
 package com.alicloud.openservices.tablestore.timeline;
 
+import com.alicloud.openservices.tablestore.model.filter.Filter;
+import com.alicloud.openservices.tablestore.timeline.common.TimelineException;
+import com.alicloud.openservices.tablestore.timeline.common.TimelineExceptionType;
+
 /**
  * ScanParameter类的构造类，LIB使用者必须使用ScanParameterBuilder构造ScanParameter。
  */
@@ -41,7 +45,7 @@ public class ScanParameterBuilder {
      */
     public ScanParameterBuilder from(long sequenceID) {
         if (sequenceID < 0) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "from must more than or equal 0");
         }
 
@@ -56,7 +60,7 @@ public class ScanParameterBuilder {
      */
     public ScanParameterBuilder to(long sequenceID) {
         if (sequenceID < 0) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "to must more than or equal 0");
         }
 
@@ -71,11 +75,20 @@ public class ScanParameterBuilder {
      */
     public ScanParameterBuilder maxCount(int maxCount) {
         if (maxCount < 0) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "maxCount must more than or equal 0");
         }
 
         this.parameter.setMaxCount(maxCount);
+        return this;
+    }
+
+    public ScanParameterBuilder filter(Filter filter) {
+        if (filter == null) {
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
+                    "filter is null");
+        }
+        this.parameter.setFilter(filter);
         return this;
     }
 
@@ -86,27 +99,27 @@ public class ScanParameterBuilder {
      */
     public ScanParameter build() {
         if (parameter.getFrom() == null) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "ScanParameter's 'from' parameter is Null");
         }
 
         if (parameter.getTo() == null) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "ScanParameter's 'to' parameter is Null");
         }
 
         if (parameter.getMaxCount() == null) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "ScanParameter's 'maxCount' parameter is Null");
         }
 
         if (parameter.isForward() && parameter.getFrom() > parameter.getTo()) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "from must less than to in FORWARD");
         }
 
         if (!parameter.isForward() && parameter.getFrom() < parameter.getTo()) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "from must more than to in BACKWARD");
         }
 

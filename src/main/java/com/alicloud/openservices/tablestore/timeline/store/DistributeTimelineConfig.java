@@ -1,6 +1,8 @@
-package com.alicloud.openservices.tablestore.timeline;
+package com.alicloud.openservices.tablestore.timeline.store;
 
 import com.alicloud.openservices.tablestore.ClientConfiguration;
+import com.alicloud.openservices.tablestore.timeline.message.IMessage;
+import com.alicloud.openservices.tablestore.timeline.message.StringMessage;
 import com.alicloud.openservices.tablestore.writer.WriterConfig;
 
 /**
@@ -71,17 +73,17 @@ public class DistributeTimelineConfig {
     /**
      * 消息ID存储的属性列名称。
      */
-    private String messageIDColumnName = "message_id";
+    private String messageIDColumnNameSuffix = "message_id";
 
     /**
      * 消息内容列的前缀字符。
      */
-    private String messageContentPrefix = "content_";
+    private String messageContentSuffix = "content";
 
     /**
      * 消息内容的crc32值，用于校验数据是否完整。
      */
-    private String columnNameOfMessageCrc32 = "crc32";
+    private String columnNameOfMessageCrc32Suffix = "crc32";
 
     /**
      * （Binary类型列）每一列的最大长度。默认1MB。
@@ -290,48 +292,48 @@ public class DistributeTimelineConfig {
      * 获取消息ID所在列的列名。
      * @return  列名。
      */
-    public String getMessageIDColumnName() {
-        return messageIDColumnName;
+    public String getMessageIDColumnNameSuffix() {
+        return messageIDColumnNameSuffix;
     }
 
     /**
-     * 设置消息ID所在列的列名。
-     * @param messageIDColumnName 消息ID所在列的列名。
+     * 设置消息ID所在列的列名后缀。
+     * @param messageIDColumnNameSuffix 消息ID所在列的列名后缀。
      */
-    public void setMessageIDColumnName(String messageIDColumnName) {
-        this.messageIDColumnName = messageIDColumnName;
+    public void setMessageIDColumnNameSuffix(String messageIDColumnNameSuffix) {
+        this.messageIDColumnNameSuffix = messageIDColumnNameSuffix;
     }
 
     /**
      * 获取消息内容列的名称前缀。
      * @return  列名前缀。
      */
-    public String getMessageContentPrefix() {
-        return messageContentPrefix;
+    public String getMessageContentSuffix() {
+        return messageContentSuffix;
     }
 
     /**
      * 设置消息内容列的名称前缀。
-     * @param messageContentPrefix 消息内容列的名称前缀。
+     * @param messageContentSuffix 消息内容列的名称后缀。
      */
-    public void setMessageContentPrefix(String messageContentPrefix) {
-        this.messageContentPrefix = messageContentPrefix;
+    public void setMessageContentSuffix(String messageContentSuffix) {
+        this.messageContentSuffix = messageContentSuffix;
     }
 
     /**
-     * 获取存储消息内容的CRC32结果的列名。
-     * @return  存储CRC32的列名。
+     * 获取存储消息内容的CRC32结果的列名后缀。
+     * @return  存储CRC32的列名后缀。
      */
-    public String getColumnNameOfMessageCrc32() {
-        return columnNameOfMessageCrc32;
+    public String getColumnNameOfMessageCrc32Suffix() {
+        return columnNameOfMessageCrc32Suffix;
     }
 
     /**
-     * 设置存储消息内容的CRC32结果的列名。
-     * @param columnNameOfMessageCrc32 存储CRC32的列名。
+     * 设置存储消息内容的CRC32结果的列名后缀。
+     * @param columnNameOfMessageCrc32Suffix 存储CRC32的列名后缀。
      */
-    public void setColumnNameOfMessageCrc32(String columnNameOfMessageCrc32) {
-        this.columnNameOfMessageCrc32 = columnNameOfMessageCrc32;
+    public void setColumnNameOfMessageCrc32Suffix(String columnNameOfMessageCrc32Suffix) {
+        this.columnNameOfMessageCrc32Suffix = columnNameOfMessageCrc32Suffix;
     }
 
     /**

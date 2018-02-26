@@ -1,5 +1,7 @@
-package com.alicloud.openservices.tablestore.timeline;
+package com.alicloud.openservices.tablestore.timeline.common;
 
+
+import com.alicloud.openservices.tablestore.timeline.TimelineEntry;
 
 /**
  * 异步接口中的回调接口。

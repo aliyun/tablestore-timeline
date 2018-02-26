@@ -1,5 +1,7 @@
 package com.alicloud.openservices.tablestore.timeline;
 
+import com.alicloud.openservices.tablestore.timeline.message.IMessage;
+import com.alicloud.openservices.tablestore.timeline.message.StringMessage;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

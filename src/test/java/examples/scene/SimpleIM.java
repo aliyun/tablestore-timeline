@@ -1,6 +1,13 @@
-package examples;
+package examples.scene;
 
-import com.alicloud.openservices.tablestore.timeline.*;
+import com.alicloud.openservices.tablestore.timeline.ScanParameter;
+import com.alicloud.openservices.tablestore.timeline.ScanParameterBuilder;
+import com.alicloud.openservices.tablestore.timeline.Timeline;
+import com.alicloud.openservices.tablestore.timeline.TimelineEntry;
+import com.alicloud.openservices.tablestore.timeline.message.IMessage;
+import com.alicloud.openservices.tablestore.timeline.message.StringMessage;
+import com.alicloud.openservices.tablestore.timeline.store.DistributeTimelineConfig;
+import com.alicloud.openservices.tablestore.timeline.store.DistributeTimelineStore;
 
 import java.util.Arrays;
 import java.util.Iterator;

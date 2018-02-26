@@ -1,7 +1,16 @@
 package com.alicloud.openservices.tablestore.timeline;
 
 import com.alicloud.openservices.tablestore.SyncClient;
+import com.alicloud.openservices.tablestore.model.ColumnValue;
 import com.alicloud.openservices.tablestore.model.DeleteTableRequest;
+import com.alicloud.openservices.tablestore.model.filter.Filter;
+import com.alicloud.openservices.tablestore.model.filter.SingleColumnValueFilter;
+import com.alicloud.openservices.tablestore.timeline.common.TimelineCallback;
+import com.alicloud.openservices.tablestore.timeline.message.IMessage;
+import com.alicloud.openservices.tablestore.timeline.message.StringMessage;
+import com.alicloud.openservices.tablestore.timeline.store.DistributeTimelineConfig;
+import com.alicloud.openservices.tablestore.timeline.store.DistributeTimelineStore;
+import com.alicloud.openservices.tablestore.timeline.store.IStore;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -127,7 +136,7 @@ public class TestDistributeTimelineStore {
         store.writeAsync(timelineID, message, new TimelineCallback<IMessage>() {
             @Override
             public void onCompleted(String timelineID, IMessage request, TimelineEntry timelineEntry) {
-                fail();
+                isDone.set(true);
             }
 
             @Override
@@ -171,6 +180,31 @@ public class TestDistributeTimelineStore {
     }
 
     @Test
+    public void testWriteRead_Attribute() {
+        config.setTableName(testTablePrefix + "testWriteRead_Attribute");
+        IStore store = new DistributeTimelineStore(config);
+        store.create();
+        sleep(5);
+
+        String timelineID = "00001";
+        String content = String.valueOf(new Date().getTime());
+        IMessage message = new StringMessage(content);
+        message.addAttribute("name", "hangzhou");
+        TimelineEntry entry = store.write(timelineID, message);
+
+        assertEquals(message, entry.getMessage());
+
+        Long sequenceID = entry.getSequenceID();
+        assertTrue(sequenceID> 0);
+
+        TimelineEntry entry2 = store.read(timelineID, sequenceID);
+        assertEquals(sequenceID, entry2.getSequenceID());
+        assertEquals(new String(message.serialize()), new String(entry2.getMessage().serialize()));
+        assertEquals(1, entry2.getMessage().getAttributes().size());
+        assertEquals("hangzhou", entry2.getMessage().getAttributes().get("name"));
+    }
+
+    @Test
     public void testWriteRead_Future() {
         config.setTableName(testTablePrefix + "testWriteRead_Future");
         IStore store = new DistributeTimelineStore(config);
@@ -178,7 +212,7 @@ public class TestDistributeTimelineStore {
         sleep(5);
 
         String timelineID = "00001";
-        String content = String.valueOf(new Date().getTime());
+        String content = "testWriteRead_Future";
         IMessage message = new StringMessage(content);
         Future<TimelineEntry> future = store.writeAsync(timelineID, message, null);
         assertTrue(future != null);
@@ -216,6 +250,7 @@ public class TestDistributeTimelineStore {
         String content = String.valueOf(new Date().getTime());
         IMessage message = new StringMessage(content);
         final AtomicReference<TimelineEntry> entryRef = new AtomicReference<TimelineEntry>();
+        final AtomicBoolean isFail = new AtomicBoolean(false);
 
         Future<TimelineEntry> future = store.writeAsync(timelineID, message, new TimelineCallback<IMessage>() {
             @Override
@@ -225,11 +260,11 @@ public class TestDistributeTimelineStore {
 
             @Override
             public void onFailed(String timelineID, IMessage request, Exception ex) {
-                fail();
+                isFail.set(true);
             }
         });
 
-        while (entryRef.get() == null) {
+        while (entryRef.get() == null && !isFail.get()) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException ex) {
@@ -242,6 +277,7 @@ public class TestDistributeTimelineStore {
         Long sequenceID = entry.getSequenceID();
         assertTrue(sequenceID> 0);
 
+        isFail.set(false);
         final AtomicReference<TimelineEntry> entryRef2 = new AtomicReference<TimelineEntry>();
         Future<TimelineEntry> future2 = store.readAsync(timelineID, sequenceID, new TimelineCallback<Long>() {
             @Override
@@ -251,11 +287,11 @@ public class TestDistributeTimelineStore {
 
             @Override
             public void onFailed(String timelineID, Long request, Exception ex) {
-                fail();
+                isFail.set(true);
             }
         });
 
-        while (entryRef2.get() == null) {
+        while (entryRef2.get() == null && !isFail.get()) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException ex) {
@@ -352,6 +388,45 @@ public class TestDistributeTimelineStore {
             entry = iterator.next();
             assertEquals(sequence2, entry.getSequenceID());
             assertEquals(new String(message2.serialize()), new String(entry.getMessage().serialize()));
+
+            assertTrue(!iterator.hasNext());
+        } catch (Exception ex) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testScanForwardWithFilter() {
+        config.setTableName(testTablePrefix + "testScanForwardWithFilter");
+        IStore store = new DistributeTimelineStore(config);
+        store.create();
+        sleep(5);
+
+        String timelineID = "00001";
+        String content1 = String.valueOf(new Date().getTime());
+        IMessage message1 = new StringMessage(content1);
+        message1.addAttribute("name", "hangzhou");
+        TimelineEntry entry1 = store.write(timelineID, message1);
+        Long sequence1 = entry1.getSequenceID();
+
+        String content2 = String.valueOf(new Date().getTime() + 1);
+        IMessage message2 = new StringMessage(content2);
+        message2.addAttribute("name", "xi'an");
+        store.write(timelineID, message2);
+
+        Filter filter = new SingleColumnValueFilter("name", SingleColumnValueFilter.CompareOperator.EQUAL,
+                ColumnValue.fromString("hangzhou"));
+        ScanParameter parameter = ScanParameterBuilder.scanForward()
+                .maxCount(100).from(0).to(Long.MAX_VALUE).filter(filter)
+                .build();
+
+        try {
+            Iterator<TimelineEntry> iterator = store.scan(timelineID, parameter);
+
+            assertTrue(iterator.hasNext());
+            TimelineEntry entry = iterator.next();
+            assertEquals(sequence1, entry.getSequenceID());
+            assertEquals(new String(message1.serialize()), new String(entry.getMessage().serialize()));
 
             assertTrue(!iterator.hasNext());
         } catch (Exception ex) {

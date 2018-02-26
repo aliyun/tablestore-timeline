@@ -1,4 +1,6 @@
-package com.alicloud.openservices.tablestore.timeline;
+package com.alicloud.openservices.tablestore.timeline.message;
+
+import java.util.Map;
 
 /**
  * 消息类的接口，LIB的使用者需要继承IMessage或者DistinctMessage实现自己的Message类。
@@ -38,4 +40,17 @@ public interface IMessage {
      * @param input  待反序列化的消息对象的字节。
      */
     void deserialize(byte[] input);
+
+    /**
+     * 新增属性列和值。属性列支持过滤。
+     * @param name      属性名。
+     * @param value     属性值。
+     */
+    void addAttribute(String name, String value);
+
+    /**
+     * 获取属性列的列名和列值。
+     * @return  属性的名字和值。
+     */
+    Map<String, String> getAttributes();
 }

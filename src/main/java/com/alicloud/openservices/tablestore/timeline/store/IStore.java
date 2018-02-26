@@ -1,4 +1,9 @@
-package com.alicloud.openservices.tablestore.timeline;
+package com.alicloud.openservices.tablestore.timeline.store;
+
+import com.alicloud.openservices.tablestore.timeline.ScanParameter;
+import com.alicloud.openservices.tablestore.timeline.TimelineEntry;
+import com.alicloud.openservices.tablestore.timeline.common.TimelineCallback;
+import com.alicloud.openservices.tablestore.timeline.message.IMessage;
 
 import java.io.Closeable;
 import java.util.Iterator;

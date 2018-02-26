@@ -1,9 +1,14 @@
-package com.alicloud.openservices.tablestore.timeline;
+package com.alicloud.openservices.tablestore.timeline.utils;
 
 import com.alicloud.openservices.tablestore.model.Column;
 import com.alicloud.openservices.tablestore.model.PrimaryKey;
 import com.alicloud.openservices.tablestore.model.PutRowResponse;
 import com.alicloud.openservices.tablestore.model.Row;
+import com.alicloud.openservices.tablestore.timeline.TimelineEntry;
+import com.alicloud.openservices.tablestore.timeline.common.TimelineException;
+import com.alicloud.openservices.tablestore.timeline.common.TimelineExceptionType;
+import com.alicloud.openservices.tablestore.timeline.message.IMessage;
+import com.alicloud.openservices.tablestore.timeline.store.DistributeTimelineConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,12 +21,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.zip.CRC32;
 
-class Utils {
-    final static int CONTENT_COLUMN_START_ID = 10000;
+public class Utils {
+    public final static int CONTENT_COLUMN_START_ID = 10000;
+    public final static String SYSTEM_COLUMN_NAME_PREFIX = "__";
 
     private static Logger logger = LoggerFactory.getLogger(Utils.class);
 
-    static <Res> Res waitForFuture(Future<Res> f) {
+    public static <Res> Res waitForFuture(Future<Res> f) {
         try {
             return f.get();
         } catch(InterruptedException e) {
@@ -33,18 +39,20 @@ class Utils {
         }
     }
 
-    static TimelineEntry toTimelineEntry(PutRowResponse response, IMessage message) {
+    public static TimelineEntry toTimelineEntry(PutRowResponse response, IMessage message) {
         long sequenceID = response.getRow().getPrimaryKey().getPrimaryKeyColumn(1).getValue().asLong();
         return new TimelineEntry(sequenceID, message);
     }
 
-    static TimelineEntry toTimelineEntry(Row row, DistributeTimelineConfig config) {
+    public static TimelineEntry toTimelineEntry(Row row, DistributeTimelineConfig config) {
         PrimaryKey pk = row.getPrimaryKey();
         int pkCount = pk.getPrimaryKeyColumns().length;
         if (pkCount != 2) {
-            throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "Invalid Primary Key column count, expected:2, but:" + String.valueOf(pkCount));
         }
+
+        IMessage message = config.getMessageInstance().newInstance();
 
         Long sequenceID = pk.getPrimaryKeyColumn(1).getValue().asLong();
 
@@ -55,10 +63,10 @@ class Utils {
         long crc32 = 0;
         for (Column column: columns) {
             String name = column.getName();
-            if (name.startsWith(config.getMessageContentPrefix())) {
-                int columnSeqID = Integer.parseInt(name.substring(config.getMessageContentPrefix().length()));
+            if (name.startsWith(SYSTEM_COLUMN_NAME_PREFIX + config.getMessageContentSuffix())) {
+                int columnSeqID = Integer.parseInt(name.substring(SYSTEM_COLUMN_NAME_PREFIX.length() + config.getMessageContentSuffix().length()));
                 if (columnSeqID != index) {
-                    throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+                    throw new TimelineException(TimelineExceptionType.INVALID_USE,
                             String.format("Message Content column sequence id is wrong, expected:%d, but:%d",
                             index, columnSeqID));
                 }
@@ -66,10 +74,12 @@ class Utils {
 
                 byte[] value = column.getValue().asBinary();
                 stream.write(value, 0, value.length);
-            } else if (name.equals(config.getMessageIDColumnName())) {
+            } else if (name.equals(SYSTEM_COLUMN_NAME_PREFIX + config.getMessageIDColumnNameSuffix())) {
                 messageID = column.getValue().asString();
-            } else if (name.equals(config.getColumnNameOfMessageCrc32())) {
+            } else if (name.equals(SYSTEM_COLUMN_NAME_PREFIX + config.getColumnNameOfMessageCrc32Suffix())) {
                 crc32 = column.getValue().asLong();
+            } else {
+                message.addAttribute(name, column.getValue().asString());
             }
         }
         byte[] content = stream.toByteArray();
@@ -78,41 +88,40 @@ class Utils {
             stream.close();
         } catch (IOException ex) {
             logger.error("Close ByteArrayOutputStream failed", ex);
-            throw new TimelineException(TimelineExceptionType.TET_ABORT,
+            throw new TimelineException(TimelineExceptionType.ABORT,
                     "Close ByteArrayOutputStream failed", ex);
         }
 
-        if (config.getColumnNameOfMessageCrc32() != null && !config.getColumnNameOfMessageCrc32().isEmpty()) {
+        if (config.getColumnNameOfMessageCrc32Suffix() != null && !config.getColumnNameOfMessageCrc32Suffix().isEmpty()) {
             long current = Utils.crc32(content);
             if (current != crc32) {
-                throw new TimelineException(TimelineExceptionType.TET_INVALID_USE,
+                throw new TimelineException(TimelineExceptionType.INVALID_USE,
                         String.format("Message content is broken, expected crc32:%d, but:%d",
                         crc32, current));
             }
         }
 
-        IMessage message = config.getMessageInstance().newInstance();
         message.deserialize(content);
         message.setMessageID(messageID);
         return new TimelineEntry(sequenceID, message);
     }
 
-    static long crc32(byte[] content) {
+    public static long crc32(byte[] content) {
         CRC32 crc32 = new CRC32();
         crc32.update(content, 0, content.length);
         return crc32.getValue();
     }
 
-    static String getLocalIP() {
+    public static String getLocalIP() {
         try {
             return InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
-            throw new TimelineException(TimelineExceptionType.TET_ABORT,
+            throw new TimelineException(TimelineExceptionType.ABORT,
                     "Can not get local machine ip.");
         }
     }
 
-    static String getProcessID() {
+    public static String getProcessID() {
         String value = ManagementFactory.getRuntimeMXBean().getName();
         return value.substring(0, value.indexOf("@"));
     }
