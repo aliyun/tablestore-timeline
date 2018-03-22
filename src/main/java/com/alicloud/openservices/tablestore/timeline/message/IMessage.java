@@ -49,6 +49,13 @@ public interface IMessage {
     void addAttribute(String name, String value);
 
     /**
+     * 更新属性列的值。
+     * @param name      属性名。
+     * @param newValue  属性值。
+     */
+    void updateAttribute(String name, String newValue);
+
+    /**
      * 获取属性列的列名和列值。
      * @return  属性的名字和值。
      */

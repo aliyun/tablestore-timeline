@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * 基于表格存储（Table Store）的分布式存储层实现.
@@ -55,11 +56,14 @@ public class DistributeTimelineStore implements IStore {
     @Override
     public void batch(String timelineID, IMessage message) {
         if (tableStoreWriter == null) {
-            ExecutorService executor = Executors.newFixedThreadPool(config.getClientConfiguration().getIoThreadCount());
-            tableStoreWriter = new DefaultTableStoreWriter(tableStore, config.getTableName(),
-                    config.getWriterConfig(), null, executor);
+            synchronized(this) {
+                if (tableStoreWriter == null) {
+                    ExecutorService executor = Executors.newFixedThreadPool(config.getClientConfiguration().getIoThreadCount());
+                    tableStoreWriter = new DefaultTableStoreWriter(tableStore, config.getTableName(),
+                            config.getWriterConfig(), null, executor);
+                }
+            }
         }
-
         tableStoreWriter.addRowChange(createPutRowRequest(timelineID, message).getRowChange());
     }
 
@@ -72,6 +76,39 @@ public class DistributeTimelineStore implements IStore {
             return doWriteAsync(timelineID, message, callback, request);
         } catch (TableStoreException ex) {
             throw handleTableStoreException(ex, timelineID, "write");
+        } catch (ClientException ex) {
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
+                    "Parameter is invalid, reason:" + ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    public TimelineEntry update(String timelineID,
+                                Long sequenceID,
+                                IMessage message)
+    {
+        try {
+            Future<TimelineEntry> res = updateAsync(timelineID, sequenceID, message, null);
+            return Utils.waitForFuture(res);
+        } catch (TableStoreException ex) {
+            throw handleTableStoreException(ex, timelineID, "update");
+        } catch (ClientException ex) {
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
+                    "Parameter is invalid, reason:" + ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    public Future<TimelineEntry> updateAsync(String timelineID,
+                                             Long sequenceID,
+                                             IMessage message,
+                                             TimelineCallback<IMessage> callback)
+    {
+        try {
+            UpdateRowRequest request = createUpdateRowRequest(timelineID, sequenceID, message);
+            return doUpdateAsync(timelineID, message, callback, request);
+        } catch (TableStoreException ex) {
+            throw handleTableStoreException(ex, timelineID, "update");
         } catch (ClientException ex) {
             throw new TimelineException(TimelineExceptionType.INVALID_USE,
                     "Parameter is invalid, reason:" + ex.getMessage(), ex);
@@ -249,9 +286,9 @@ public class DistributeTimelineStore implements IStore {
         putChange.setReturnType(ReturnType.RT_PK);
 
         byte[] content = message.serialize();
-        if (content.length > 1000 * 1024 * 1024) {
+        if (content.length > 2 * 1024 * 1024) {
             throw new TimelineException(TimelineExceptionType.INVALID_USE,
-                    String.format("Message Content must less than 1GB, current:%s", String.valueOf(content.length)));
+                    String.format("Message Content must less than 2MB, current:%s", String.valueOf(content.length)));
         }
 
         /**
@@ -269,6 +306,14 @@ public class DistributeTimelineStore implements IStore {
             String columnName = Utils.SYSTEM_COLUMN_NAME_PREFIX + config.getMessageContentSuffix() + String.valueOf(index++);
             putChange.addColumn(String.valueOf(columnName), ColumnValue.fromBinary(columnValue));
             pos += columnValue.length;
+        }
+
+        /**
+         * Write Message Content Count
+         */
+        {
+            String columnName = Utils.SYSTEM_COLUMN_NAME_PREFIX + config.getMessageContentCountSuffix();
+            putChange.addColumn(columnName, ColumnValue.fromLong(index - Utils.CONTENT_COLUMN_START_ID));
         }
 
         /**
@@ -299,6 +344,78 @@ public class DistributeTimelineStore implements IStore {
         }
 
         request.setRowChange(putChange);
+        return request;
+    }
+
+    private UpdateRowRequest createUpdateRowRequest(String timelineID, Long sequenceID, IMessage message) {
+        UpdateRowRequest request = new UpdateRowRequest();
+        RowUpdateChange updateChange = new RowUpdateChange(config.getTableName());
+
+        PrimaryKeyColumn firstPK = new PrimaryKeyColumn(config.getFirstPKName(), PrimaryKeyValue.fromString(timelineID));
+        PrimaryKeyColumn secondPK = new PrimaryKeyColumn(config.getSecondPKName(), PrimaryKeyValue.fromLong(sequenceID));
+        updateChange.setPrimaryKey(PrimaryKeyBuilder.createPrimaryKeyBuilder().
+                addPrimaryKeyColumn(firstPK).addPrimaryKeyColumn(secondPK).build());
+        updateChange.setReturnType(ReturnType.RT_PK);
+
+        /**
+         * Write message content.
+         */
+        byte[] content = message.serialize();
+        if (content.length > 2 * 1024 * 1024) {
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
+                    String.format("Message Content must less than 2MB, current:%s", String.valueOf(content.length)));
+        }
+
+        int pos = 0;
+        int index = Utils.CONTENT_COLUMN_START_ID;
+        while (pos < content.length) {
+            byte[] columnValue;
+            if (pos + config.getColumnMaxLength() < content.length) {
+                columnValue = Arrays.copyOfRange(content, pos, pos + config.getColumnMaxLength());
+            } else {
+                columnValue = Arrays.copyOfRange(content, pos, content.length);
+            }
+            String columnName = Utils.SYSTEM_COLUMN_NAME_PREFIX + config.getMessageContentSuffix() + String.valueOf(index++);
+            updateChange.put(String.valueOf(columnName), ColumnValue.fromBinary(columnValue));
+            pos += columnValue.length;
+        }
+
+        /**
+         * Write Message Content Count
+         */
+        {
+            String columnName = Utils.SYSTEM_COLUMN_NAME_PREFIX + config.getMessageContentCountSuffix();
+            updateChange.put(columnName, ColumnValue.fromLong(index - Utils.CONTENT_COLUMN_START_ID));
+        }
+
+        /**
+         * Write CRC32.
+         */
+        if (config.getColumnNameOfMessageCrc32Suffix() != null && !config.getColumnNameOfMessageCrc32Suffix().isEmpty()) {
+            long crc32 = Utils.crc32(content);
+            String columnName = Utils.SYSTEM_COLUMN_NAME_PREFIX + config.getColumnNameOfMessageCrc32Suffix();
+            updateChange.put(columnName, ColumnValue.fromLong(crc32));
+        }
+
+        /**
+         * Write message ID.
+         */
+        updateChange.put(Utils.SYSTEM_COLUMN_NAME_PREFIX + config.getMessageIDColumnNameSuffix(), ColumnValue.fromString(message.getMessageID()));
+
+        /**
+         * Write message attributes.
+         */
+        Map<String, String> attributes = message.getAttributes();
+        for (String key : attributes.keySet()) {
+            if (key.startsWith(Utils.SYSTEM_COLUMN_NAME_PREFIX))
+            {
+                throw new TimelineException(TimelineExceptionType.INVALID_USE,
+                        String.format("Attribute name:%s can not start with %s", key, Utils.SYSTEM_COLUMN_NAME_PREFIX));
+            }
+            updateChange.put(key, ColumnValue.fromString(attributes.get(key)));
+        }
+
+        request.setRowChange(updateChange);
         return request;
     }
 
@@ -437,6 +554,72 @@ public class DistributeTimelineStore implements IStore {
                     return Utils.toTimelineEntry(response, message);
                 } catch (TableStoreException ex) {
                     throw handleTableStoreException(ex, timelineID, "write");
+                } catch (ClientException ex) {
+                    throw new TimelineException(TimelineExceptionType.INVALID_USE,
+                            "Drop store failed, reason:" + ex.getMessage(), ex);
+                }
+            }
+        };
+    }
+
+    private Future<TimelineEntry> doUpdateAsync(final String timelineID,
+                                                final IMessage message,
+                                                final TimelineCallback<IMessage> callback,
+                                                UpdateRowRequest request)
+    {
+        final TableStoreCallback<UpdateRowRequest, UpdateRowResponse> tablestoreCallback = new TableStoreCallback<UpdateRowRequest, UpdateRowResponse>() {
+            @Override
+            public void onCompleted(UpdateRowRequest request, UpdateRowResponse response) {
+                long sequenceID = response.getRow().getPrimaryKey().getPrimaryKeyColumn(config.getSecondPKName()).getValue().asLong();
+                TimelineEntry timelineEntry = new TimelineEntry(sequenceID, message);
+                callback.onCompleted(timelineID, message, timelineEntry);
+            }
+
+            @Override
+            public void onFailed(UpdateRowRequest putRowRequest, Exception e) {
+                e = createException(e, timelineID, "update");
+
+                callback.onFailed(timelineID, message, e);
+            }
+        };
+
+        final Future<UpdateRowResponse> future = tableStore.updateRow(request, tablestoreCallback);
+        return new Future<TimelineEntry>() {
+            @Override
+            public boolean cancel(boolean mayInterruptIfRunning) {
+                return future.cancel(mayInterruptIfRunning);
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return future.isCancelled();
+            }
+
+            @Override
+            public boolean isDone() {
+                return future.isDone();
+            }
+
+            @Override
+            public TimelineEntry get() throws InterruptedException, ExecutionException {
+                try {
+                    UpdateRowResponse response = future.get();
+                    return Utils.toTimelineEntry(response, message);
+                } catch (TableStoreException ex) {
+                    throw handleTableStoreException(ex, timelineID, "update");
+                } catch (ClientException ex) {
+                    throw new TimelineException(TimelineExceptionType.INVALID_USE,
+                            "Drop store failed, reason:" + ex.getMessage(), ex);
+                }
+            }
+
+            @Override
+            public TimelineEntry get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                try {
+                    UpdateRowResponse response = future.get(timeout, unit);
+                    return Utils.toTimelineEntry(response, message);
+                } catch (TableStoreException ex) {
+                    throw handleTableStoreException(ex, timelineID, "update");
                 } catch (ClientException ex) {
                     throw new TimelineException(TimelineExceptionType.INVALID_USE,
                             "Drop store failed, reason:" + ex.getMessage(), ex);
