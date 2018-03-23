@@ -80,6 +80,8 @@ public class DistributeTimelineConfig {
      */
     private String messageContentSuffix = "content";
 
+    private String messageContentCountSuffix = "column_count";
+
     /**
      * 消息内容的crc32值，用于校验数据是否完整。
      */
@@ -366,5 +368,21 @@ public class DistributeTimelineConfig {
      */
     public void setWriterConfig(WriterConfig writerConfig) {
         this.writerConfig = writerConfig;
+    }
+
+    /**
+     * 获取消息内容列的个数，主要是为了避免update内容后，内容列变短带来的影响。
+     * @return  消息内容列个数的后缀
+     */
+    public String getMessageContentCountSuffix() {
+        return messageContentCountSuffix;
+    }
+
+    /**
+     * 设置消息内容列的个数，主要是为了避免update内容后，内容列变短带来的影响。
+     * @param messageContentCountSuffix     消息内容列个数的后缀
+     */
+    public void setMessageContentCountSuffix(String messageContentCountSuffix) {
+        this.messageContentCountSuffix = messageContentCountSuffix;
     }
 }

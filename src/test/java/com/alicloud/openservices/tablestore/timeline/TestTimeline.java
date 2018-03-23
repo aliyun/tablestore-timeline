@@ -46,6 +46,23 @@ public class TestTimeline {
         }
 
         @Override
+        public TimelineEntry update(String timelineID, Long sequenceID, IMessage message) {
+            this.message = message;
+            this.timelineID = timelineID;
+            this.sequenceID = sequenceID;
+            return null;
+        }
+
+        @Override
+        public Future<TimelineEntry> updateAsync(String timelineID, Long sequenceID, IMessage message, TimelineCallback<IMessage> callback) {
+            this.timelineID = timelineID;
+            this.sequenceID = sequenceID;
+            this.message = message;
+            this.writeCallback = callback;
+            return null;
+        }
+
+        @Override
         public TimelineEntry read(String timelineID, Long sequenceID) {
             this.timelineID = timelineID;
             this.sequenceID = sequenceID;
@@ -212,6 +229,51 @@ public class TestTimeline {
             timeline.storeAsync(message, callback);
 
             assertEquals("1", store.timelineID);
+            assertArrayEquals(message.serialize(), store.message.serialize());
+            assertEquals(callback, store.writeCallback);
+        } catch (TimelineException ex) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testUpdate() {
+        FakeStore store = new FakeStore();
+        try {
+            Timeline timeline = new Timeline("1", store);
+            IMessage message = new StringMessage("111");
+            timeline.update(2L, message);
+
+            assertEquals("1", store.timelineID);
+            assertEquals(Long.valueOf(2), store.sequenceID);
+            assertArrayEquals(message.serialize(), store.message.serialize());
+        } catch (Exception ex) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testUpdateAsync() {
+        class FakeCallback implements TimelineCallback<IMessage> {
+
+            @Override
+            public void onCompleted(String timelineID, IMessage request, TimelineEntry timelineEntry) {
+            }
+
+            @Override
+            public void onFailed(String timelineID, IMessage request, Exception ex) {
+            }
+        }
+
+        FakeStore store = new FakeStore();
+        try {
+            Timeline timeline = new Timeline("1", store);
+            IMessage message = new StringMessage("111");
+            TimelineCallback<IMessage> callback = new FakeCallback();
+            timeline.updateAsync(2L, message, callback);
+
+            assertEquals("1", store.timelineID);
+            assertEquals(Long.valueOf(2), store.sequenceID);
             assertArrayEquals(message.serialize(), store.message.serialize());
             assertEquals(callback, store.writeCallback);
         } catch (TimelineException ex) {

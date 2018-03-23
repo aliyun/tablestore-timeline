@@ -79,6 +79,15 @@ public class StringMessage extends DistinctMessage {
     }
 
     @Override
+    public void updateAttribute(String name, String newValue) {
+        if (!attributes.containsKey(name)) {
+            throw new TimelineException(TimelineExceptionType.INVALID_USE,
+                    "Attribute[" + name + "] is not exist.");
+        }
+        addAttribute(name, newValue);
+    }
+
+    @Override
     public Map<String, String> getAttributes() {
         return Collections.unmodifiableMap(this.attributes);
     }

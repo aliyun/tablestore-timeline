@@ -1,9 +1,6 @@
 package com.alicloud.openservices.tablestore.timeline.utils;
 
-import com.alicloud.openservices.tablestore.model.Column;
-import com.alicloud.openservices.tablestore.model.PrimaryKey;
-import com.alicloud.openservices.tablestore.model.PutRowResponse;
-import com.alicloud.openservices.tablestore.model.Row;
+import com.alicloud.openservices.tablestore.model.*;
 import com.alicloud.openservices.tablestore.timeline.TimelineEntry;
 import com.alicloud.openservices.tablestore.timeline.common.TimelineException;
 import com.alicloud.openservices.tablestore.timeline.common.TimelineExceptionType;
@@ -17,6 +14,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.zip.CRC32;
@@ -44,6 +42,11 @@ public class Utils {
         return new TimelineEntry(sequenceID, message);
     }
 
+    public static TimelineEntry toTimelineEntry(UpdateRowResponse response, IMessage message) {
+        long sequenceID = response.getRow().getPrimaryKey().getPrimaryKeyColumn(1).getValue().asLong();
+        return new TimelineEntry(sequenceID, message);
+    }
+
     public static TimelineEntry toTimelineEntry(Row row, DistributeTimelineConfig config) {
         PrimaryKey pk = row.getPrimaryKey();
         int pkCount = pk.getPrimaryKeyColumns().length;
@@ -56,6 +59,17 @@ public class Utils {
 
         Long sequenceID = pk.getPrimaryKeyColumn(1).getValue().asLong();
 
+        /**
+         * Read Content Column Count.
+         */
+        String contentCountName = Utils.SYSTEM_COLUMN_NAME_PREFIX + config.getMessageContentCountSuffix();
+        long columnCount = -1;
+        long currentCount = 0;
+        Column contentCountColumn = row.getLatestColumn(contentCountName);
+        if (contentCountColumn != null) {
+            columnCount = contentCountColumn.getValue().asLong();
+        }
+
         Column[] columns = row.getColumns();
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         String messageID = null;
@@ -63,24 +77,35 @@ public class Utils {
         long crc32 = 0;
         for (Column column: columns) {
             String name = column.getName();
-            if (name.startsWith(SYSTEM_COLUMN_NAME_PREFIX + config.getMessageContentSuffix())) {
+            if (name.startsWith(SYSTEM_COLUMN_NAME_PREFIX + config.getMessageContentSuffix()))
+            {
+                if (currentCount == columnCount) {
+                    continue;
+                }
                 int columnSeqID = Integer.parseInt(name.substring(SYSTEM_COLUMN_NAME_PREFIX.length() + config.getMessageContentSuffix().length()));
                 if (columnSeqID != index) {
                     throw new TimelineException(TimelineExceptionType.INVALID_USE,
                             String.format("Message Content column sequence id is wrong, expected:%d, but:%d",
                             index, columnSeqID));
                 }
-                index += 1;
 
                 byte[] value = column.getValue().asBinary();
                 stream.write(value, 0, value.length);
+
+                index++;
+                currentCount++;
             } else if (name.equals(SYSTEM_COLUMN_NAME_PREFIX + config.getMessageIDColumnNameSuffix())) {
                 messageID = column.getValue().asString();
             } else if (name.equals(SYSTEM_COLUMN_NAME_PREFIX + config.getColumnNameOfMessageCrc32Suffix())) {
                 crc32 = column.getValue().asLong();
-            } else {
+            } else if (!name.startsWith(SYSTEM_COLUMN_NAME_PREFIX)){
                 message.addAttribute(name, column.getValue().asString());
             }
+        }
+
+        if (columnCount != -1 && currentCount != columnCount) {
+            throw new TimelineException(TimelineExceptionType.ABORT,
+                    String.format("Message content column is broken, expected %d, but %d", columnCount, currentCount));
         }
         byte[] content = stream.toByteArray();
 
@@ -92,7 +117,9 @@ public class Utils {
                     "Close ByteArrayOutputStream failed", ex);
         }
 
-        if (config.getColumnNameOfMessageCrc32Suffix() != null && !config.getColumnNameOfMessageCrc32Suffix().isEmpty()) {
+        if (config.getColumnNameOfMessageCrc32Suffix() != null
+                && !config.getColumnNameOfMessageCrc32Suffix().isEmpty())
+        {
             long current = Utils.crc32(content);
             if (current != crc32) {
                 throw new TimelineException(TimelineExceptionType.INVALID_USE,
