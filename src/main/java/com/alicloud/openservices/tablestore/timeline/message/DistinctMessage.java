@@ -16,7 +16,7 @@ public abstract class DistinctMessage implements IMessage {
     private String messageID = null;
 
     /**
-     * 这里的整数（Integer）范围选择了(0, Integer.MAX_VALUE)，会按递增顺序循环使用这个范围的值。
+     * 这里的整数（Integer）范围选择了(0, Integer.MAX_VALUE]，会按递增顺序循环使用这个范围的值。
      * 这里的MessageID是machineID + 递增ID（每个进程内循环递增的，不同机器，不同进程的machineID不同）。
      * 对于Timeline模型，消息ID只需要在当前会话中唯一即可。
      * 比如在IM中，只需要在某个会话或者群里面唯一即可，这时候其实更好的方式是由客户端生成这个消息ID。
@@ -26,8 +26,14 @@ public abstract class DistinctMessage implements IMessage {
     @Override
     public String getMessageID() {
         if (messageID == null) {
-            baseID.compareAndSet(Integer.MAX_VALUE, 0);
-            messageID = machineID + String.valueOf(baseID.addAndGet(1));
+            int currentBaseID = baseID.incrementAndGet();
+            while (currentBaseID < 0) {
+                // 说明此时baseID已经溢出为负数，需要将baseID重置为0。
+                // 考虑到可能有并发的compareAndSet，需要反复重试直到新的baseID >= 0
+                baseID.compareAndSet(currentBaseID, 0);
+                currentBaseID = baseID.incrementAndGet();
+            }
+            messageID = machineID + String.valueOf(currentBaseID);
         }
         return String.valueOf(messageID);
     }
