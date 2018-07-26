@@ -1,12 +1,12 @@
 
-# TableStore Timeline Lib
+# TableStore Timeline Module
 
 
 ## Requirements
 Java 1.6 or later
 
 ## Install
-The recommended way to use the TableStore Timeline Lib in your project is to consume it from Maven. Import as follows:
+The recommended way to use the TableStore Timeline Module in your project is to consume it from Maven. Import as follows:
 ```xml
 <dependency>
     <groupId>com.aliyun.openservices.tablestore</groupId>
