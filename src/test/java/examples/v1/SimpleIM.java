@@ -1,4 +1,4 @@
-package examples.scene;
+package examples.v1;
 
 import com.alicloud.openservices.tablestore.timeline.ScanParameter;
 import com.alicloud.openservices.tablestore.timeline.ScanParameterBuilder;

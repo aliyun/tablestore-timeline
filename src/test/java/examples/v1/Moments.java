@@ -1,4 +1,4 @@
-package examples.scene;
+package examples.v1;
 
 import com.alicloud.openservices.tablestore.timeline.ScanParameter;
 import com.alicloud.openservices.tablestore.timeline.ScanParameterBuilder;
@@ -18,12 +18,12 @@ import java.util.List;
  * 基于Timeline LIB的微信朋友圈的简单实现。
  */
 public class Moments {
-    private final static String endpoint = "";
-    private final static String accessKeyID = "";
-    private final static String accessKeySecret = "";
-    private final static String instanceName = "";
-    private final static String storeTableName = "";
-    private final static String syncTableName = "";
+    private final static String ENDPOINT = "";
+    private final static String ACCESSKEY_ID = "";
+    private final static String ACCESSKEY_SECRET = "";
+    private final static String INSTANCE_NAME = "";
+    private final static String STORE_TABLE_NAME = "";
+    private final static String SYNC_TABLE_NAME = "";
 
 
     public static void main(String[] args) {
@@ -48,10 +48,10 @@ public class Moments {
         }
     }
 
-    private final static IStore store = new DistributeTimelineStore(
-            new DistributeTimelineConfig(endpoint,accessKeyID,accessKeySecret, instanceName, storeTableName));
-    private final static IStore sync = new DistributeTimelineStore(
-            new DistributeTimelineConfig(endpoint,accessKeyID,accessKeySecret, instanceName, syncTableName));
+    private final IStore store = new DistributeTimelineStore(
+            new DistributeTimelineConfig(ENDPOINT,ACCESSKEY_ID,ACCESSKEY_SECRET, INSTANCE_NAME, STORE_TABLE_NAME));
+    private final IStore sync = new DistributeTimelineStore(
+            new DistributeTimelineConfig(ENDPOINT,ACCESSKEY_ID,ACCESSKEY_SECRET, INSTANCE_NAME, SYNC_TABLE_NAME));
 
     /**
      * 发布一条状态。
