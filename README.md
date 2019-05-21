@@ -1,4 +1,4 @@
-# TableStore Timeline Lib V2
+# TableStore Timeline V2
 
 
 ## Requirements
