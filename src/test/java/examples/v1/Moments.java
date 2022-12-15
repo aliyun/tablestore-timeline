@@ -66,7 +66,7 @@ public class Moments {
         /**
          * 构造消息对象
          */
-        IMessage message = new WeChatMessage("是秋还是冬");
+        IMessage message = new WeChatMessage(content);
 
         /**
          * 写入自己的历史状态中
